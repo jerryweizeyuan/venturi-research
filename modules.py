@@ -126,7 +126,7 @@ class Up(nn.Module):
 
 
 class UNet(nn.Module):
-    def __init__(self, c_in=3, c_out=3, time_dim=256, device="cuda"):
+    def __init__(self, c_in=4, c_out=4, time_dim=256, device="cuda"):#输入输出通道数
         super().__init__()
         self.device = device
         self.time_dim = time_dim
@@ -187,7 +187,7 @@ class UNet(nn.Module):
 
 
 class UNet_conditional(nn.Module):
-    def __init__(self, c_in=3, c_out=3, time_dim=256, num_classes=None, device="cuda"):
+    def __init__(self, c_in=4, c_out=4, time_dim=256, num_classes=None, device="cuda"):
         super().__init__()
         self.device = device
         self.time_dim = time_dim
@@ -212,7 +212,7 @@ class UNet_conditional(nn.Module):
         self.outc = nn.Conv2d(64, c_out, kernel_size=1)
 
         if num_classes is not None:
-            self.label_emb = nn.Embedding(num_classes, time_dim)
+            self.label_emb = nn.Embedding(num_classes, time_dim)#条件标签数量
 
     def pos_encoding(self, t, channels):
         inv_freq = 1.0 / (
@@ -224,12 +224,12 @@ class UNet_conditional(nn.Module):
         pos_enc = torch.cat([pos_enc_a, pos_enc_b], dim=-1)
         return pos_enc
 
-    def forward(self, x, t, y):
+    def forward(self, x, t, y):#  ← 这里！x=噪声图片，t=时间步，y=标签
         t = t.unsqueeze(-1).type(torch.float)
         t = self.pos_encoding(t, self.time_dim)
 
         if y is not None:
-            t += self.label_emb(y)
+            t += self.label_emb(y)# ← 这里！标签信息加到时间步
 
         x1 = self.inc(x)
         x2 = self.down1(x1, t)
