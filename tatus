@@ -1,0 +1,32 @@
+[33mcommit c91d21aa936ba1c550f8295667b94bf516b09070[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: jerryweizeyuan <3012521198@qq.com>
+Date:   Sat Feb 28 23:26:16 2026 +0800
+
+    初始化：文丘里管扩散模型研究
+
+.idea/.gitignore
+.idea/cda_ai.iml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+__pycache__/cfd_dataset.cpython-310.pyc
+__pycache__/ddpm.cpython-310.pyc
+__pycache__/ddpm_conditional.cpython-310.pyc
+__pycache__/modules.cpython-310.pyc
+__pycache__/utils.cpython-310.pyc
+cfd_dataset.py
+create_toy_data.py
+ddpm_conditional.py
+diagnose_cuda.py
+first_cfd_model.pth
+modules.py
+run_training_test.py
+test_dataset.py
+test_fast_sample.py
+test_gpu_real.py
+test_modified.py
+toy_data_visualization.png
+train_simple_cfd.py
+utils.py
+visualize_toy_data.py

@@ -14,7 +14,7 @@ logging.basicConfig(format="%(asctime)s - %(levelname)s: %(message)s", level=log
 
 
 class Diffusion:
-    def __init__(self, noise_steps=100, beta_start=1e-4, beta_end=0.02, img_size=64, device="cuda"):  #noise_steps=100：扩散总步数
+    def __init__(self, noise_steps=100, beta_start=1e-4, beta_end=0.02, img_size=64, device="cpu"):  #noise_steps=100：扩散总步数
         self.noise_steps = noise_steps #计算并存储
         self.beta_start = beta_start
         self.beta_end = beta_end
@@ -99,6 +99,8 @@ def train(args):#定义主训练函数，args包含所有训练配置参数
 #定期保存和验证
         if epoch % 10 == 0:#%：取模运算符，每10个epoch执行一次，第0,10,20,...,290,300轮执行，这里的 10 表示验证和保存检查点的频率，即每10个epoch执行一次验证和保存。这个数字不需要修改
             labels = torch.arange(10).long().to(device)#orch.arange(10)：创建0-9的序列，结果：tensor([0,1,2,3,4,5,6,7,8,9])， # 将这里的 10 改为与 args.num_classes（在launch()函数中） 相同的值
+            # 确保标签不超出范围
+            labels = torch.clamp(labels, 0, args.num_classes - 1)#这行代码是测试时临时加的，正式开始时要删除这行代码
             sampled_images = diffusion.sample(model, n=len(labels), labels=labels)#保证 len(labels) == n，目的是一次性为数据集中的每一个类别（由标签代表）生成一个对应的样本，
             ema_sampled_images = diffusion.sample(ema_model, n=len(labels), labels=labels)
             plot_images(sampled_images)#调用工具函数显示图片
@@ -114,12 +116,12 @@ def launch():#定义一个名为 launch的函数，作为整个训练过程的�
     parser = argparse.ArgumentParser()#创建一个参数解析器对象。这个对象可以定义和解析命令行参数，方便用户通过命令行修改训练配置。
     args = parser.parse_args()#解析命令行参数。由于没有预先定义任何参数，这里只是返回一个空的命名空间对象。通常我们会先调用parser.add_argument()定义参数，再解析。
     args.run_name = "DDPM_conditional"#设置训练运行名称。这个名称用于：创建保存模型、日志、结果的子目录，在TensorBoard中标识本次实验
-    args.epochs = 300#设置训练的总轮数（epochs）。一个epoch表示模型遍历完整训练集一次。300表示模型将看300遍整个训练集。
-    args.batch_size = 14#设置批次大小。每次训练迭代中使用的样本数量。14表示每次更新模型参数时，使用14张图片计算梯度
+    args.epochs = 1#设置训练的总轮数（epochs）。一个epoch表示模型遍历完整训练集一次。300表示模型将看300遍整个训练集。
+    args.batch_size = 1#设置批次大小。每次训练迭代中使用的样本数量。14表示每次更新模型参数时，使用14张图片计算梯度
     args.image_size = 64#设置输入图像的尺寸。64表示图片将被处理为64×64像素。注意：CIFAR-10原始是32×32，这里可能使用了预处理的上采样版本。
-    args.num_classes = 10#设置类别数量。CIFAR-10数据集共有10个类别
-    args.dataset_path = r"C:\Users\dome\datasets\cifar10\cifar10-64\train"#设置训练数据集的路径
-    args.device = "cuda"#设置计算设备。"cuda"表示使用NVIDIA GPU进行加速计算。如果没有可用的GPU，应该改为"cpu"。
+    args.num_classes = 1#设置类别数量。CIFAR-10数据集共有10个类别
+    args.dataset_path = "data/venturi"#设置训练数据集的路径
+    args.device = "cpu"#设置计算设备。"cuda"表示使用NVIDIA GPU进行加速计算。如果没有可用的GPU，应该改为"cpu"。
     args.lr = 3e-4#设置学习率。3e-4（即0.0003）是Adam优化器常用的学习率值，控制每次参数更新的步长
     train(args)#调用之前定义的train()函数，传入所有配置参数，开始训练过程。
 
