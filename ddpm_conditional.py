@@ -97,19 +97,40 @@ def train(args):#定义主训练函数，args包含所有训练配置参数
             pbar.set_postfix(MSE=loss.item())#pbar：tqdm进度条对象，.set_postfix()：在进度条后显示附加信息，loss.item()：获取标量损失值
             logger.add_scalar("MSE", loss.item(), global_step=epoch * l + i)# TensorBoard记录
 #定期保存和验证
-        if epoch % 10 == 0:#%：取模运算符，每10个epoch执行一次，第0,10,20,...,290,300轮执行，这里的 10 表示验证和保存检查点的频率，即每10个epoch执行一次验证和保存。这个数字不需要修改
-            labels = torch.arange(10).long().to(device)#orch.arange(10)：创建0-9的序列，结果：tensor([0,1,2,3,4,5,6,7,8,9])， # 将这里的 10 改为与 args.num_classes（在launch()函数中） 相同的值
+      #  if epoch % 10 == 0:#%：取模运算符，每10个epoch执行一次，第0,10,20,...,290,300轮执行，这里的 10 表示验证和保存检查点的频率，即每10个epoch执行一次验证和保存。这个数字不需要修改
+         #   labels = torch.arange(10).long().to(device)#orch.arange(10)：创建0-9的序列，结果：tensor([0,1,2,3,4,5,6,7,8,9])， # 将这里的 10 改为与 args.num_classes（在launch()函数中） 相同的值
             # 确保标签不超出范围
-            labels = torch.clamp(labels, 0, args.num_classes - 1)#这行代码是测试时临时加的，正式开始时要删除这行代码
-            sampled_images = diffusion.sample(model, n=len(labels), labels=labels)#保证 len(labels) == n，目的是一次性为数据集中的每一个类别（由标签代表）生成一个对应的样本，
-            ema_sampled_images = diffusion.sample(ema_model, n=len(labels), labels=labels)
-            plot_images(sampled_images)#调用工具函数显示图片
-            save_images(sampled_images, os.path.join("results", args.run_name, f"{epoch}.jpg"))#save_images()：保存图片为文件，跨平台路径拼接，f-string格式化文件名
-            save_images(ema_sampled_images, os.path.join("results", args.run_name, f"{epoch}_ema.jpg"))#图片保存在results下的实验名称（也就是args.run_name）下
-            torch.save(model.state_dict(), os.path.join("models", args.run_name, f"ckpt.pt"))#将当前训练中的原始U-Net模型的所有可学习参数（权重、偏置等）保存到一个文件中，# 路径示例：models/DDPM_conditional/ckpt.pt
-            torch.save(ema_model.state_dict(), os.path.join("models", args.run_name, f"ema_ckpt.pt"))#将EMA模型的参数保存到另一个独立的文件中。如前所述，这个模型通常是生成质量更高、更稳定的版本。
-            torch.save(optimizer.state_dict(), os.path.join("models", args.run_name, f"optim.pt"))#保存优化器的当前状态。这包括优化器内部为每个参数维护的动量（momentum）、二阶矩估计等动态信息。
+         #   labels = torch.clamp(labels, 0, args.num_classes - 1)#这行代码是测试时临时加的，正式开始时要删除这行代码
+          #  sampled_images = diffusion.sample(model, n=len(labels), labels=labels)#保证 len(labels) == n，目的是一次性为数据集中的每一个类别（由标签代表）生成一个对应的样本，
+         #   ema_sampled_images = diffusion.sample(ema_model, n=len(labels), labels=labels)
+           # plot_images(sampled_images)  # 调用工具函数显示图片
+           # save_images(sampled_images, os.path.join("results", args.run_name, f"{epoch}.jpg"))#save_images()：保存图片为文件，跨平台路径拼接，f-string格式化文件名
+           # save_images(ema_sampled_images, os.path.join("results", args.run_name, f"{epoch}_ema.jpg"))#图片保存在results下的实验名称（也就是args.run_name）下
+           # torch.save(model.state_dict(), os.path.join("models", args.run_name, f"ckpt.pt"))#将当前训练中的原始U-Net模型的所有可学习参数（权重、偏置等）保存到一个文件中，# 路径示例：models/DDPM_conditional/ckpt.pt
+           # torch.save(ema_model.state_dict(), os.path.join("models", args.run_name, f"ema_ckpt.pt"))#将EMA模型的参数保存到另一个独立的文件中。如前所述，这个模型通常是生成质量更高、更稳定的版本。
+           # torch.save(optimizer.state_dict(), os.path.join("models", args.run_name, f"optim.pt"))#保存优化器的当前状态。这包括优化器内部为每个参数维护的动量（momentum）、二阶矩估计等动态信息。
+        if epoch % 10 == 0:
+              labels = torch.arange(10).long().to(device)
+              labels = torch.clamp(labels, 0, args.num_classes - 1)
 
+              sampled_images = diffusion.sample(model, n=len(labels), labels=labels)
+              ema_sampled_images = diffusion.sample(ema_model, n=len(labels), labels=labels)
+
+            # === 核心：先保存完整4通道原始数据 ===
+              torch.save(sampled_images, os.path.join("results", args.run_name, f"{epoch}_raw.pt"))
+              torch.save(ema_sampled_images, os.path.join("results", args.run_name, f"{epoch}_ema_raw.pt"))
+
+           # === 再保存3通道可视化图片 ===
+              save_images(sampled_images, os.path.join("results", args.run_name, f"{epoch}.jpg"))
+              save_images(ema_sampled_images, os.path.join("results", args.run_name, f"{epoch}_ema.jpg"))
+
+    # 保存模型（此部分不变）
+              torch.save(model.state_dict(), os.path.join("models", args.run_name, f"ckpt.pt"))
+              torch.save(ema_model.state_dict(), os.path.join("models", args.run_name, f"ema_ckpt.pt"))
+              torch.save(optimizer.state_dict(), os.path.join("models", args.run_name, f"optim.pt"))
+
+    # 可选：如果需要看图，可以临时取消下一行的注释，但程序会暂停直到您关闭图片窗口
+    # plot_images(sampled_images[:, :3, :, :])
 
 def launch():#定义一个名为 launch的函数，作为整个训练过程的启动入口。
     import argparse#导入Python的argparse模块。这个模块用于解析命令行参数，虽然在这个函数中并未实际从命令行获取参数，但通常用于构建可配置的训练脚本

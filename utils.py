@@ -19,11 +19,18 @@ def plot_images(images):
 
 
 def save_images(images, path, **kwargs):
-    """将一批图像保存为单个图片文件"""
+    """将一批图像保存为单个图片文件（支持4通道流场数据转3通道RGB）"""
+    # 1. 如果输入是4通道，自动取前3个通道用于生成RGB图片
+    if images.shape[1] == 4:
+        images = images[:, :3, :, :]  # 取 u, v, p 通道
+    # 2. 将数据归一化到[0,1]范围
+    images = (images - images.min()) / (images.max() - images.min() + 1e-8)
+    # 3. 创建网格，转换为标准图片格式并保存
     grid = torchvision.utils.make_grid(images, **kwargs)
-    ndarr = grid.permute(1, 2, 0).to('cpu').numpy()
+    ndarr = grid.mul(255).clamp(0, 255).byte().permute(1, 2, 0).cpu().numpy()
     im = Image.fromarray(ndarr)
     im.save(path)
+    print(f"[保存成功] {path}")
 
 
 def get_data(args):
