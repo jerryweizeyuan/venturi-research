@@ -6,18 +6,18 @@ import os
 import numpy as np
 
 
-class VenturiDataset(Dataset):
+class VenturiDataset(Dataset):#定义一个名为VenturiDataset的类，它继承自PyTorch的Dataset基类。这意味着这个类必须实现__len__和__getitem__方法。
     """文丘里管流场数据集"""
 
     def __init__(self, data_root, img_size=64, mode='train'):
         self.data_root = data_root
         self.img_size = img_size
         self.mode = mode
-        self.samples = []
+        self.samples = []#初始化一个空列表samples，用于存储所有数据样本的信息。
 
         # 收集数据
-        data_path = os.path.join(data_root, mode)
-        if not os.path.exists(data_path):
+        data_path = os.path.join(data_root, mode)#程序就会去 data/venturi/train/ 文件夹找数据
+        if not os.path.exists(data_path):#检查数据路径是否存在。如果不存在，抛出FileNotFoundError异常，并显示错误信息。
             raise FileNotFoundError(f"数据路径不存在: {data_path}")
 
         # 假设每个子文件夹代表一种几何条件

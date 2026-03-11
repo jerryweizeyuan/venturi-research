@@ -66,10 +66,10 @@ def train(args):#定义主训练函数，args包含所有训练配置参数
     setup_logging(args.run_name)#调用工具函数设置日志系统，创建日志文件，记录训练过程，args.run_name是实验名称，用于区分不同训练任务
     device = args.device#获取计算设备
     dataloader = get_data(args)#从 utils.py文件导入的函数，创建PyTorch的 DataLoader对象，用于批量加载训练数据，需要修改此函数以加载文丘里管流场数据
-    model = UNet_conditional(num_classes=args.num_classes).to(device)#创建条件U-Net模型实例，num_classes：条件标签的类别数，`num_classes`必须与您数据集中条件标签的总类别数一致。例如，您有5种文丘里管几何，这里就应设为5。
+    model = UNet_conditional(num_classes=args.num_classes).to(device)#创建条件U-Net模型实例（初始化模型），num_classes：条件标签的类别数，`num_classes`必须与您数据集中条件标签的总类别数一致。例如，您有5种文丘里管几何，这里就应设为5。
     optimizer = optim.AdamW(model.parameters(), lr=args.lr)#使用AdamW优化器（Adam with weight decay），负责根据损失（预测误差）更新模型参数。学习率：lr=args.lr（默认3e-4）
     mse = nn.MSELoss()#定义损失函数。模型的任务是“预测噪声”，损失即为预测噪声与真实噪声的均方误差，用于比较预测噪声和真实噪声，公式：MSE = 1/n * Σ(预测值 - 真实值)²
-    diffusion = Diffusion(img_size=args.image_size, device=device)#创建扩散模型类，包含加噪、去噪、时间步采样等方法
+    diffusion = Diffusion(img_size=args.image_size, device=device)#创建扩散模型类（初始化“算法公式”工具），包含加噪、去噪、时间步采样等方法
     logger = SummaryWriter(os.path.join("runs", args.run_name))#创建TensorBoard日志记录器，用于可视化训练过程中的损失曲线，查看命令：tensorboard --logdir=runs
     l = len(dataloader)#计算每个epoch的批次数量，用于计算全局训练步数
     #在训练过程中，维护一个模型参数的“滑动平均”（ema_model），而非直接使用当前模型（model）。这通常能使生成结果更稳定、质量更高。您最终应使用ema_model进行生成，因为它通常更好。代码中也会同时保存这两个模型
@@ -144,7 +144,7 @@ def launch():#定义一个名为 launch的函数，作为整个训练过程的�
     args.dataset_path = "data/venturi"#设置训练数据集的路径
     args.device = "cpu"#设置计算设备。"cuda"表示使用NVIDIA GPU进行加速计算。如果没有可用的GPU，应该改为"cpu"。
     args.lr = 3e-4#设置学习率。3e-4（即0.0003）是Adam优化器常用的学习率值，控制每次参数更新的步长
-    train(args)#调用之前定义的train()函数，传入所有配置参数，开始训练过程。
+    train(args)#调用之前定义的train()函数，传入所有配置参数，开始训练过程。args对象包含dataset_path，被传递给train()函数
 
 
 if __name__ == '__main__':#Python程序的入口点检查。只有当脚本被直接运行时（而不是被其他模块导入），才会执行下面的代码块。
